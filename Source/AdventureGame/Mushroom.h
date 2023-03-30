@@ -4,16 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "Collectible.h"
-#include "Berry.generated.h"
+#include "Mushroom.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ADVENTUREGAME_API ABerry : public ACollectible
+class ADVENTUREGAME_API AMushroom : public ACollectible
 {
 	GENERATED_BODY()
 
 	virtual void Collected(AActor* OtherActor);
-	virtual void onTick(float tickdelta);
 };

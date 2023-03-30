@@ -2,7 +2,7 @@
 
 
 #include "Collectible.h"
-#include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "MouseCharacter.h"
 
 // Sets default values
@@ -12,11 +12,13 @@ ACollectible::ACollectible()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CollectibleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CollectibleMesh"));
-	DetectionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	SetRootComponent(DetectionBox);
-	DetectionBox->InitBoxExtent(FVector(50, 50, 50));
-	DetectionBox->OnComponentBeginOverlap.AddDynamic(this, &ACollectible::OnOverlap);
+	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionBox"));
+	SetRootComponent(DetectionSphere);
+	DetectionSphere->InitSphereRadius(50);
+	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &ACollectible::OnOverlap);
 	CollectibleMesh->SetupAttachment(GetRootComponent());
+
+	ticksPassed = 0;
 }
 
 // Called when the game starts or when spawned
@@ -31,7 +33,13 @@ void ACollectible::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	
+	if (ticksPassed <= 360) {
+		ticksPassed++;
+	}
+	else {
+		ticksPassed = 0;
+	}
+	onTick(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -43,7 +51,9 @@ void ACollectible::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void ACollectible::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	Collected(OtherActor);
+	if (OtherActor->IsA<AMouseCharacter>()) {
+		Collected(OtherActor);
+	}
 }
 
 void ACollectible::despawn()
@@ -55,9 +65,22 @@ void ACollectible::despawn()
 
 void ACollectible::Collected(AActor* OtherActor)
 {
-	if (OtherActor->IsA<AMouseCharacter>()) {
-		despawn();
-		UE_LOG(LogTemp, Warning, TEXT("COLLECTED"));
-	}
+
+}
+
+void ACollectible::onTick(float tickdelta)
+{
+
+}
+
+void ACollectible::RotateTick(float tickdelta)
+{
+	CollectibleMesh->SetRelativeRotation(FRotator3d(CollectibleMesh->GetRelativeRotation().Pitch, -ticksPassed * 4, CollectibleMesh->GetRelativeRotation().Roll));
+}
+
+void ACollectible::HoverTick(float tickdelta)
+{
+	float HoverHeight = FMath::Cos(ticksPassed / 10);
+	CollectibleMesh->SetRelativeLocation(FVector(CollectibleMesh->GetRelativeLocation().X, CollectibleMesh->GetRelativeLocation().Y, CollectibleMesh->GetRelativeLocation().Z + HoverHeight));
 }
 

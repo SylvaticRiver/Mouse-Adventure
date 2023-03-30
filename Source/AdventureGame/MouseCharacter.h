@@ -29,11 +29,13 @@ public:
 	bool isSprinting;
 	FVector playerVelocity;
 	FVector prevVelocity;
+	float maxHorizontalVelocity;
 	float terminalVelocity;
 	bool isJumping;
 	bool isCrouching;
 	bool exhausted;
 
+	int ArrowCountOfAmmunitionForBow;
 	int lives;
 	int Stamina;
 
@@ -82,7 +84,7 @@ public:
 		void RotateY(const FInputActionValue& InputValue);
 
 
-	void MovePlayer();
+	void MovePlayer(float tickdelta);
 	void appplyGravity(float strenght);
 	bool isOnGround();
 	void ManageStamina();

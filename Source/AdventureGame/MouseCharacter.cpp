@@ -22,6 +22,7 @@ AMouseCharacter::AMouseCharacter()
 	SpringArm->SetupAttachment(GetRootComponent());
 	SpringArm->SetRelativeLocation(FVector(100.f, 100.f, 100.f));
 	SpringArm->TargetArmLength = 400.f;
+	SpringArm->bUsePawnControlRotation = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(GetRootComponent());
@@ -33,19 +34,20 @@ AMouseCharacter::AMouseCharacter()
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
-
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = true;
+	bUseControllerRotationRoll = true;
 
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
 	terminalVelocity = -40;
+	maxHorizontalVelocity = 100;
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lives = 5;
 	Stamina = 100;
 	exhausted = false;
+	ArrowCountOfAmmunitionForBow = 0;
 }
 
 // Called when the game starts or when spawned
@@ -58,10 +60,14 @@ void AMouseCharacter::BeginPlay()
 			sub->AddMappingContext(InputMapping, 0);
 		}
 	}
-
+	SpringArm->bUsePawnControlRotation = true;
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = true;
+	bUseControllerRotationRoll = true;
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
-	terminalVelocity = -10;
+	terminalVelocity = -40;
+	maxHorizontalVelocity = 100;
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lives = 5;
@@ -74,8 +80,7 @@ void AMouseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
-	MovePlayer();
+	MovePlayer(DeltaTime);
 	if (isOnGround()) {
 		playerVelocity.Z = 0;
 		MouseMesh->SetRelativeLocation(FVector(MouseMesh->GetRelativeLocation().X, MouseMesh->GetRelativeLocation().Y, 40));
@@ -86,9 +91,10 @@ void AMouseCharacter::Tick(float DeltaTime)
 	else {
 		playerVelocity.X = prevVelocity.X;
 		playerVelocity.Y = prevVelocity.Y;
+		playerVelocity *= FVector(0.9, 0.9, 1);
 	}
 	if (playerVelocity.Z <= terminalVelocity) {
-		playerVelocity.Z = -1;
+		playerVelocity.Z = -9.8F;
 	}
 	Camera->SetRelativeLocation(isSprinting ? FVector(-1300, 0, 300) : FVector(-1000, 0, 200));
 	ManageStamina();
@@ -116,7 +122,7 @@ void AMouseCharacter::MoveStraight(const FInputActionValue& InputValue) {
 	float val = InputValue.Get<float>();
 	if (val > 0) {
 		float newVelocity = val * isSprinting ? 30 : 10;
-		newVelocity *= isJumping ? 1.25 : 1;
+		newVelocity *= isJumping ? 1.1 : 1;
 		playerVelocity.X += newVelocity;
 		prevVelocity.X = playerVelocity.X;
 	}
@@ -137,16 +143,14 @@ void AMouseCharacter::MoveSide(const FInputActionValue& InputValue) {
 
 void AMouseCharacter::RotateX(const FInputActionValue& InputValue) {
 	float val = InputValue.Get<float>();
-	if (val != 0) {
-		Controller->GetControlRotation().Add(10, 10, 10);
-	}
+
+	AddControllerYawInput(val);
 }
 
 void AMouseCharacter::RotateY(const FInputActionValue& InputValue) {
 	float val = InputValue.Get<float>();
-	if (val != 0) {
-		AddControllerYawInput(val);
-	}
+
+	AddControllerPitchInput(val);
 }
 
 void AMouseCharacter::Sprint(const FInputActionValue& InputValue) {
@@ -167,8 +171,8 @@ void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
 void AMouseCharacter::JumpUp(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
 	if (val && isOnGround() && Stamina > 30) {
-		MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + FVector(0, 0, 60));
-		playerVelocity.Z = 100;
+		MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + FVector(0, 0, 110));
+		playerVelocity.Z = 125;
 		prevVelocity.Z = playerVelocity.Z;
 		isJumping = true;
 		Stamina -= 30;
@@ -180,7 +184,6 @@ void AMouseCharacter::CrouchDown(const FInputActionValue& InputValue) {
 	if (val) {
 		Camera->SetRelativeLocation(FVector(-900.f, 0.f, 150.f));
 		Camera->SetRelativeRotation(FRotator3d(-10.f, 0.f, 0.f));
-		
 	}
 }
 
@@ -191,9 +194,15 @@ void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
 }
 
 
-void AMouseCharacter::MovePlayer() {
-	appplyGravity(20);
-	MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + this->playerVelocity);
+void AMouseCharacter::MovePlayer(float tickdelta) {
+	appplyGravity(10);
+	if (FMath::Abs(playerVelocity.X) >= maxHorizontalVelocity) {
+		this->playerVelocity.X = maxHorizontalVelocity;
+	}
+	if (FMath::Abs(playerVelocity.Y) >= maxHorizontalVelocity) {
+		this->playerVelocity.Y = maxHorizontalVelocity;
+	}
+	MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + this->playerVelocity * 10.F * tickdelta);
 }
 
 void AMouseCharacter::appplyGravity(float strenght) {
@@ -217,7 +226,7 @@ void AMouseCharacter::ManageStamina() {
 }
 
 bool AMouseCharacter::isOnGround() {
-	return MouseMesh->GetRelativeLocation().Z <= 50;
+	return MouseMesh->GetRelativeLocation().Z <= 40;
 }
 
 float AMouseCharacter::GetXVelocity() {

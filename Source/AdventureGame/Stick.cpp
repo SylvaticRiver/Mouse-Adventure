@@ -1,18 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Berry.h"
+#include "Stick.h"
 #include "MouseCharacter.h"
 
-
-void ABerry::onTick(float tickdelta)
+void AStick::onTick(float tickdelta)
 {
 	RotateTick(tickdelta);
 	HoverTick(tickdelta);
 }
 
-void ABerry::Collected(AActor* OtherActor)
+void AStick::Collected(AActor* OtherActor)
 {
-	Cast<AMouseCharacter>(OtherActor)->SetActorLocation(FVector(100, 100, 100));
+	Cast<AMouseCharacter>(OtherActor)->ArrowCountOfAmmunitionForBow = 10;
 	despawn();
 }

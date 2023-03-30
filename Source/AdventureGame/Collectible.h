@@ -26,11 +26,16 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Collectible")
+	int ticksPassed;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collectible")
 		class UStaticMeshComponent* CollectibleMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
-		class UBoxComponent* DetectionBox{ nullptr };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collectible")
+		class USphereComponent* DetectionSphere{ nullptr };
+
+
 
 	UFUNCTION()
 		void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -41,4 +46,9 @@ public:
 		void despawn();
 
 		virtual void Collected(AActor* OtherActor);
+		virtual void onTick(float tickdelta);
+
+		void RotateTick(float tickdelta);
+		void HoverTick(float tickdelta);
+
 };
