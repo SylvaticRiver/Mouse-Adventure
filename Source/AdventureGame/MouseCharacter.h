@@ -34,6 +34,7 @@ public:
 	bool isJumping;
 	bool isCrouching;
 	bool exhausted;
+	int bowcharge;
 
 	int ArrowCountOfAmmunitionForBow;
 	int lives;
@@ -62,6 +63,11 @@ public:
 		class UInputAction* IA_Jump;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
 		class UInputAction* IA_Crouch;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
+		class UInputAction* IA_Bow;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship")
+		TSubclassOf<class AArrow> Arrow;
 
 public:
 	UFUNCTION(BLueprintCallable)
@@ -75,6 +81,8 @@ public:
 	UFUNCTION(BLueprintCallable)
 		void JumpUp(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
+		void JumpUpComplete(const FInputActionValue& InputValue);
+	UFUNCTION(BLueprintCallable)
 		void CrouchDown(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
 		void CrouchComplete(const FInputActionValue& InputValue);
@@ -82,6 +90,12 @@ public:
 		void RotateX(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
 		void RotateY(const FInputActionValue& InputValue);
+	UFUNCTION(BLueprintCallable)
+		void ChargeBow(const FInputActionValue& InputValue);
+	UFUNCTION(BLueprintCallable)
+		void ShootBow(const FInputActionValue& InputValue);
+	UFUNCTION(BLueprintCallable)
+		void CattailSling(const FInputActionValue& InputValue);
 
 
 	void MovePlayer(float tickdelta);

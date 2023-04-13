@@ -3,6 +3,10 @@
 
 #include "MouseCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "EngineUtils.h"
+#include "Cattail.h"
+#include "Arrow.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -15,7 +19,7 @@ AMouseCharacter::AMouseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	MouseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MouseMesh"));
-	SetRootComponent(MouseMesh);
+	MouseMesh->SetupAttachment(GetRootComponent());
 	MouseMesh->SetRelativeScale3D(FVector(0.1, 0.1, 0.1));
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
@@ -25,18 +29,18 @@ AMouseCharacter::AMouseCharacter()
 	SpringArm->bUsePawnControlRotation = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	Camera->SetupAttachment(GetRootComponent());
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->SetRelativeLocation(FVector(-1000.f, 0.f, 200.f));
 	Camera->SetRelativeRotation(FRotator3d(-10.f, 0.f, 0.f));
 
 	SpringArm->bEnableCameraLag = true;
-	SpringArm->CameraLagSpeed = 1;
+	SpringArm->CameraLagSpeed = 5;
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = true;
-	bUseControllerRotationRoll = true;
+	bUseControllerRotationRoll = false;
 
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
@@ -47,6 +51,7 @@ AMouseCharacter::AMouseCharacter()
 	lives = 5;
 	Stamina = 100;
 	exhausted = false;
+	bowcharge = 0;
 	ArrowCountOfAmmunitionForBow = 0;
 }
 
@@ -60,10 +65,6 @@ void AMouseCharacter::BeginPlay()
 			sub->AddMappingContext(InputMapping, 0);
 		}
 	}
-	SpringArm->bUsePawnControlRotation = true;
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationPitch = true;
-	bUseControllerRotationRoll = true;
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
 	terminalVelocity = -40;
@@ -81,11 +82,9 @@ void AMouseCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	MovePlayer(DeltaTime);
+
 	if (isOnGround()) {
-		playerVelocity.Z = 0;
-		MouseMesh->SetRelativeLocation(FVector(MouseMesh->GetRelativeLocation().X, MouseMesh->GetRelativeLocation().Y, 40));
-		isJumping = false;
-		playerVelocity = FVector(0, 0, playerVelocity.Z);
+		playerVelocity = FVector::ZeroVector;
 		prevVelocity = playerVelocity;
 	}
 	else {
@@ -94,7 +93,7 @@ void AMouseCharacter::Tick(float DeltaTime)
 		playerVelocity *= FVector(0.9, 0.9, 1);
 	}
 	if (playerVelocity.Z <= terminalVelocity) {
-		playerVelocity.Z = -9.8F;
+		playerVelocity.Z = -terminalVelocity;
 	}
 	Camera->SetRelativeLocation(isSprinting ? FVector(-1300, 0, 300) : FVector(-1000, 0, 200));
 	ManageStamina();
@@ -112,9 +111,12 @@ void AMouseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EIC->BindAction(IA_RotateY, ETriggerEvent::Triggered, this, &AMouseCharacter::RotateY);
 		EIC->BindAction(IA_Sprint, ETriggerEvent::Triggered, this, &AMouseCharacter::Sprint);
 		EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AMouseCharacter::StopSprint);
-		EIC->BindAction(IA_Jump, ETriggerEvent::Started, this, &AMouseCharacter::JumpUp);
+		EIC->BindAction(IA_Jump, ETriggerEvent::Started, this, &AMouseCharacter::Jump);
+		EIC->BindAction(IA_Jump, ETriggerEvent::Completed, this, &AMouseCharacter::JumpUpComplete);
 		EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AMouseCharacter::CrouchDown);
 		EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AMouseCharacter::CrouchComplete);
+		EIC->BindAction(IA_Bow, ETriggerEvent::Triggered, this, &AMouseCharacter::ChargeBow);
+		EIC->BindAction(IA_Bow, ETriggerEvent::Completed, this, &AMouseCharacter::ShootBow);
 	}
 }
 
@@ -171,12 +173,17 @@ void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
 void AMouseCharacter::JumpUp(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
 	if (val && isOnGround() && Stamina > 30) {
-		MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + FVector(0, 0, 110));
+		UE_LOG(LogTemp, Warning, TEXT("Jumped"));
+		isJumping = true;
 		playerVelocity.Z = 125;
 		prevVelocity.Z = playerVelocity.Z;
-		isJumping = true;
 		Stamina -= 30;
 	}
+}
+
+void AMouseCharacter::JumpUpComplete(const FInputActionValue& InputValue) {
+	
+	/*isJumping = false;*/
 }
 
 void AMouseCharacter::CrouchDown(const FInputActionValue& InputValue) {
@@ -193,16 +200,34 @@ void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
 	Camera->SetRelativeRotation(FRotator3d(-10.f, 0.f, 0.f));
 }
 
+void AMouseCharacter::ChargeBow(const FInputActionValue& InputValue) {
+	bool val = InputValue.Get<bool>();
+	if (val && bowcharge < 60) {
+		UE_LOG(LogTemp, Warning, TEXT("Charging"));
+		bowcharge++;
+	}
+}
+
+void AMouseCharacter::ShootBow(const FInputActionValue& InputValue) {
+	bool val = InputValue.Get<bool>();
+	float VelocityMultiplier = bowcharge / 60;
+	GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + FVector(30, 0, 0), GetActorRotation());
+	UE_LOG(LogTemp, Warning, TEXT("Shot"));
+}
+
+void AMouseCharacter::CattailSling(const FInputActionValue& InputValue) {
+
+}
 
 void AMouseCharacter::MovePlayer(float tickdelta) {
 	appplyGravity(10);
 	if (FMath::Abs(playerVelocity.X) >= maxHorizontalVelocity) {
-		this->playerVelocity.X = maxHorizontalVelocity;
+		this->playerVelocity.X = this->playerVelocity.X > 0 ? maxHorizontalVelocity : maxHorizontalVelocity * -1;
 	}
 	if (FMath::Abs(playerVelocity.Y) >= maxHorizontalVelocity) {
-		this->playerVelocity.Y = maxHorizontalVelocity;
+		this->playerVelocity.Y = this->playerVelocity.Y > 0 ? maxHorizontalVelocity : maxHorizontalVelocity * -1;
 	}
-	MouseMesh->SetRelativeLocation(MouseMesh->GetRelativeLocation() + this->playerVelocity * 10.F * tickdelta);
+	AddMovementInput(playerVelocity);
 }
 
 void AMouseCharacter::appplyGravity(float strenght) {
@@ -226,7 +251,7 @@ void AMouseCharacter::ManageStamina() {
 }
 
 bool AMouseCharacter::isOnGround() {
-	return MouseMesh->GetRelativeLocation().Z <= 40;
+	return !GetCharacterMovement()->IsFalling() && !isJumping;
 }
 
 float AMouseCharacter::GetXVelocity() {
@@ -239,5 +264,14 @@ float AMouseCharacter::GetYVelocity() {
 
 float AMouseCharacter::GetZVelocity() {
 	return this->playerVelocity.Z;
+}
+
+template<typename T>
+void FindAllActors(UWorld* World, TArray<T*>& Out)
+{
+	for (TActorIterator<T> It(World); It; ++It)
+	{
+		Out.Add(*It);
+	}
 }
 
