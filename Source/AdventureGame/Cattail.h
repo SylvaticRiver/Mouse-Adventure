@@ -3,39 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Collectible.h"
 #include "Cattail.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class ADVENTUREGAME_API ACattail : public AActor
+class ADVENTUREGAME_API ACattail : public ACollectible
 {
 	GENERATED_BODY()
 	
-public:	
-	// Sets default values for this actor's properties
-	ACattail();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	FRotator Rotator;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cattail")
-		class UStaticMeshComponent* CattailMesh;
+	virtual void Collected(AActor* OtherActor);
+	virtual void onTick(float tickdelta);
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cattail")
-		class USphereComponent* DetectionSphere{ nullptr };
-
-	UFUNCTION()
-		void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-			UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex,
-			bool bFromSweep, const FHitResult& SweepResult);
-
-	void LerpRotation();
 };

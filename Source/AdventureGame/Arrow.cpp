@@ -18,7 +18,7 @@ AArrow::AArrow()
 	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AArrow::OnOverlap);
 	ArrowMesh->SetupAttachment(GetRootComponent());
 
-	arrowVelocity = GetActorRotation().Vector() * FVector(0.5, 0.5, 0.5);
+	ticksAlive = 0;
 }
 
 // Called when the game starts or when spawned
@@ -34,6 +34,10 @@ void AArrow::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	travel(DeltaTime);
+	ticksAlive++;
+	if (ticksAlive >= 60) {
+		despawn();
+	}
 }
 
 void AArrow::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -50,9 +54,9 @@ void AArrow::despawn()
 
 void AArrow::travel(float tickdelta)
 {
-	appplyGravity(0.005);
+	appplyGravity(0.01);
 	ArrowMesh->SetRelativeLocation(ArrowMesh->GetRelativeLocation() + arrowVelocity * 5000 * tickdelta);
-	arrowVelocity *= FVector(0.95, 0.95, 1);
+	arrowVelocity *= FVector(0.985, 0.985, 1);
 }
 
 void AArrow::appplyGravity(float strenght) {

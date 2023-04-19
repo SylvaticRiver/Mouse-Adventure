@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Arrow.generated.h"
+#include "CheckPoint.generated.h"
 
 UCLASS()
-class ADVENTUREGAME_API AArrow : public AActor
+class ADVENTUREGAME_API ACheckPoint : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AArrow();
+	ACheckPoint();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,24 +23,12 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	FVector arrowVelocity;
-	int ticksAlive;
-	float chargeMultiplier;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
-		class UStaticMeshComponent* ArrowMesh;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
-		class USphereComponent* DetectionSphere{ nullptr };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lilypad")
+		class UBoxComponent* DetectionBox{ nullptr };
 
 	UFUNCTION()
 		void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex,
 			bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-		void despawn();
-
-	void travel(float tickdelta);
-	void appplyGravity(float strenght);
 };

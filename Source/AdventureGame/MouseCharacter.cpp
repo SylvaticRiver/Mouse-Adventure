@@ -5,7 +5,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EngineUtils.h"
-#include "Cattail.h"
 #include "Arrow.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -20,7 +19,8 @@ AMouseCharacter::AMouseCharacter()
 
 	MouseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MouseMesh"));
 	MouseMesh->SetupAttachment(GetRootComponent());
-	MouseMesh->SetRelativeScale3D(FVector(0.1, 0.1, 0.1));
+	MouseMesh->SetRelativeScale3D(FVector(1.9775, 1.9775, 1.9775));
+	MouseMesh->SetRelativeRotation(FRotator(0, 0, -90));
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
@@ -53,6 +53,7 @@ AMouseCharacter::AMouseCharacter()
 	exhausted = false;
 	bowcharge = 0;
 	ArrowCountOfAmmunitionForBow = 0;
+	lastCheckpointPos = FVector::ZeroVector;
 }
 
 // Called when the game starts or when spawned
@@ -163,6 +164,7 @@ void AMouseCharacter::Sprint(const FInputActionValue& InputValue) {
 	else if (Stamina <= 0) {
 		this->isSprinting = false;
 	}
+	onDeath();
 }
 
 void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
@@ -202,17 +204,20 @@ void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
 
 void AMouseCharacter::ChargeBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
-	if (val && bowcharge < 60) {
-		UE_LOG(LogTemp, Warning, TEXT("Charging"));
+	if (val && bowcharge < 20) {
+		UE_LOG(LogTemp, Warning, TEXT("Charging ticks = %d"), bowcharge);
+		Camera->FieldOfView -= 2;
 		bowcharge++;
 	}
 }
 
 void AMouseCharacter::ShootBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
-	float VelocityMultiplier = bowcharge / 60;
-	GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + FVector(30, 0, 0), GetActorRotation());
-	UE_LOG(LogTemp, Warning, TEXT("Shot"));
+	float VelocityMultiplier = 0.1 + (float)bowcharge / 120;		
+	AActor* spawnedArrow = GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + GetViewRotation().Vector(), GetViewRotation());
+	Cast<AArrow>(spawnedArrow)->arrowVelocity = FVector(VelocityMultiplier, VelocityMultiplier * 0.02, VelocityMultiplier);
+	bowcharge = 0;
+	Camera->FieldOfView = 90;
 }
 
 void AMouseCharacter::CattailSling(const FInputActionValue& InputValue) {
@@ -250,6 +255,20 @@ void AMouseCharacter::ManageStamina() {
 	/*UE_LOG(LogTemp, Warning, TEXT("IA_Forward triggered"));*/
 }
 
+void AMouseCharacter::onDeath()
+{
+	playerVelocity = FVector::ZeroVector;
+	this->SetActorLocation(lastCheckpointPos);
+	isSprinting = false;
+	playerVelocity = FVector::ZeroVector;
+	isJumping = false;
+	prevVelocity = FVector::ZeroVector;
+	lives = 5;
+	Stamina = 100;
+	exhausted = false;
+	bowcharge = 0;
+}
+
 bool AMouseCharacter::isOnGround() {
 	return !GetCharacterMovement()->IsFalling() && !isJumping;
 }
@@ -264,14 +283,5 @@ float AMouseCharacter::GetYVelocity() {
 
 float AMouseCharacter::GetZVelocity() {
 	return this->playerVelocity.Z;
-}
-
-template<typename T>
-void FindAllActors(UWorld* World, TArray<T*>& Out)
-{
-	for (TActorIterator<T> It(World); It; ++It)
-	{
-		Out.Add(*It);
-	}
 }
 

@@ -35,6 +35,7 @@ public:
 	bool isCrouching;
 	bool exhausted;
 	int bowcharge;
+	FVector lastCheckpointPos;
 
 	int ArrowCountOfAmmunitionForBow;
 	int lives;
@@ -66,7 +67,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
 		class UInputAction* IA_Bow;
 
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship")
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
 		TSubclassOf<class AArrow> Arrow;
 
 public:
@@ -102,6 +103,7 @@ public:
 	void appplyGravity(float strenght);
 	bool isOnGround();
 	void ManageStamina();
+	void onDeath();
 
 	UFUNCTION(BluePrintCallable)
 		float GetXVelocity();
