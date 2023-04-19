@@ -28,6 +28,7 @@ public:
 	bool isUnstable;
 	bool isSinking;
 	FVector submergedPosition;
+	FVector originalPosition;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lilypad")
 		class UStaticMeshComponent* LilyMesh;
@@ -42,4 +43,5 @@ public:
 
 	void startShaking(float tickDelta);
 	void startSinking(float tickDelta);
+	void removeFromLevel(bool isRemoved);
 };

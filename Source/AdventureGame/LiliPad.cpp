@@ -18,9 +18,10 @@ ALiliPad::ALiliPad()
 	DetectionBox->OnComponentBeginOverlap.AddDynamic(this, &ALiliPad::OnOverlap);
 	LilyMesh->SetupAttachment(GetRootComponent());
 
-	stabilityTicks = 100;
-	isSinking = false;
+	stabilityTicks = 200;
+	isSinking = false;	
 	submergedPosition = GetActorLocation() - FVector(0, 0, 30);
+	originalPosition = DetectionBox->GetRelativeLocation();
 }
 
 // Called when the game starts or when spawned
@@ -45,7 +46,7 @@ void ALiliPad::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Other
 {
 	if (OtherActor->IsA<AMouseCharacter>()) {
 		isUnstable = true;
-		UE_LOG(LogTemp, Warning, TEXT("HELP I'M SINKING"));
+		/*UE_LOG(LogTemp, Warning, TEXT("HELP I'M SINKING"));*/
 	}
 }
 
@@ -54,11 +55,11 @@ void ALiliPad::startShaking(float tickDelta)
 {
 	if (isUnstable && stabilityTicks > 0) {
 		stabilityTicks -= 1 * tickDelta;
-		UE_LOG(LogTemp, Warning, TEXT("stability = %d"), stabilityTicks);
+		/*UE_LOG(LogTemp, Warning, TEXT("stability = %d"), stabilityTicks);*/
 	}
 	if (stabilityTicks == 0) {
 		isSinking = true;
-		submergeTimer = 100;
+		submergeTimer = 200;
 		stabilityTicks = -1;
 	}
 }
@@ -67,14 +68,21 @@ void ALiliPad::startSinking(float tickDelta)
 {
 	if (submergeTimer > 0) {
 		/*>.<*/
-		SetActorLocation(submergedPosition);
+		removeFromLevel(true);
 		submergeTimer -= 1 * tickDelta;
+		/*UE_LOG(LogTemp, Warning, TEXT("submerged = %d"), submergeTimer);*/
 	}
 	else if (submergeTimer <= 0) {
-		SetActorLocation(FVector(100, 100, 100));
+		removeFromLevel(false);
 		submergeTimer = 0;
 		isUnstable = false;
-		stabilityTicks = 100;
+		stabilityTicks = 200;
 		isSinking = false;
 	}
+}
+
+void ALiliPad::removeFromLevel(bool isRemoved)
+{
+	this->SetActorEnableCollision(!isRemoved);
+	this->SetActorHiddenInGame(isRemoved);
 }
