@@ -26,4 +26,19 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+		class UStaticMeshComponent* EnemyMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+		class UInputMappingContext* InputMapping;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+		class UInputAction* IA_MoveStraight;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+		class UInputAction* IA_MoveSide;
+
+public:
+	UFUNCTION(BLueprintCallable)
+		void MoveStraight(const FInputActionValue& InputValue);
+	UFUNCTION(BLueprintCallable)
+		void MoveSide(const FInputActionValue& InputValue);
 };

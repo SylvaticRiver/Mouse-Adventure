@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EngineUtils.h"
 #include "Arrow.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -140,7 +141,7 @@ void AMouseCharacter::MoveSide(const FInputActionValue& InputValue) {
 	float val = InputValue.Get<float>();
 	if (val != 0) {
 		playerVelocity.Y += val * 10;
-		prevVelocity.Y = playerVelocity.Y;
+		prevVelocity.Y = playerVelocity.Y;	
 	}
 }
 
@@ -232,7 +233,8 @@ void AMouseCharacter::MovePlayer(float tickdelta) {
 	if (FMath::Abs(playerVelocity.Y) >= maxHorizontalVelocity) {
 		this->playerVelocity.Y = this->playerVelocity.Y > 0 ? maxHorizontalVelocity : maxHorizontalVelocity * -1;
 	}
-	AddMovementInput(playerVelocity);
+	AddMovementInput(playerVelocity.X * UKismetMathLibrary::GetForwardVector(Controller->GetControlRotation()));
+	AddMovementInput(playerVelocity.Y * UKismetMathLibrary::GetRightVector(Controller->GetControlRotation()));
 }
 
 void AMouseCharacter::appplyGravity(float strenght) {
