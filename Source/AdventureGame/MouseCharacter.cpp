@@ -11,6 +11,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AMouseCharacter::AMouseCharacter()
@@ -18,10 +19,10 @@ AMouseCharacter::AMouseCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	MouseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MouseMesh"));
+	MouseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MouseMesh"));
 	MouseMesh->SetupAttachment(GetRootComponent());
 	MouseMesh->SetRelativeScale3D(FVector(1.9775, 1.9775, 1.9775));
-	MouseMesh->SetRelativeRotation(FRotator(0, 0, -90));
+	MouseMesh->SetRelativeRotation(FRotator(-90, 0, 0));
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
@@ -39,9 +40,10 @@ AMouseCharacter::AMouseCharacter()
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationPitch = true;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
@@ -53,8 +55,9 @@ AMouseCharacter::AMouseCharacter()
 	Stamina = 100;
 	exhausted = false;
 	bowcharge = 0;
-	ArrowCountOfAmmunitionForBow = 0;
+	ArrowCountOfAmmunitionForBow = 3;
 	lastCheckpointPos = FVector::ZeroVector;
+	gnomePiecesCollected = 0;
 }
 
 // Called when the game starts or when spawned
@@ -76,6 +79,7 @@ void AMouseCharacter::BeginPlay()
 	lives = 5;
 	Stamina = 100;
 	exhausted = false;
+	gnomePiecesCollected = 0;
 }
 
 // Called every frame
@@ -205,21 +209,27 @@ void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
 
 void AMouseCharacter::ChargeBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
-	if (val && bowcharge < 20) {
-		UE_LOG(LogTemp, Warning, TEXT("Charging ticks = %d"), bowcharge);
-		Camera->FieldOfView -= 2;
-		bowcharge++;
+	if (ArrowCountOfAmmunitionForBow > 0) {
+		if (val && bowcharge < 20) {
+			UE_LOG(LogTemp, Warning, TEXT("Charging ticks = %d"), bowcharge);
+			Camera->FieldOfView -= 2;
+			bowcharge++;
+		}
 	}
 }
 
 void AMouseCharacter::ShootBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
-	float VelocityMultiplier = 0.1 + (float)bowcharge / 120;		
-	AActor* spawnedArrow = GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + GetViewRotation().Vector(), GetViewRotation());
-	Cast<AArrow>(spawnedArrow)->arrowVelocity = FVector(VelocityMultiplier, VelocityMultiplier * 0.02, VelocityMultiplier);
-	bowcharge = 0;
-	Camera->FieldOfView = 90;
-}
+	if (ArrowCountOfAmmunitionForBow > 0) {
+		float VelocityMultiplier = (float)bowcharge / 120;
+		AActor* spawnedArrow = GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + GetController()->GetControlRotation().Vector(), GetController()->GetControlRotation());
+		Cast<AArrow>(spawnedArrow)->arrowVelocity = FVector(VelocityMultiplier, 0, VelocityMultiplier);
+		ArrowCountOfAmmunitionForBow -= 1;
+		UE_LOG(LogTemp, Warning, TEXT("ArrowCountOfAmmunitionForMyBow = %d"), ArrowCountOfAmmunitionForBow);
+		bowcharge = 0;
+		Camera->FieldOfView = 90;
+	}
+}    
 
 void AMouseCharacter::CattailSling(const FInputActionValue& InputValue) {
 
@@ -228,6 +238,7 @@ void AMouseCharacter::CattailSling(const FInputActionValue& InputValue) {
 void AMouseCharacter::MovePlayer(float tickdelta) {
 	appplyGravity(10);
 	if (FMath::Abs(playerVelocity.X) >= maxHorizontalVelocity) {
+		SetActorRotation(FRotator(0, 0, 0));
 		this->playerVelocity.X = this->playerVelocity.X > 0 ? maxHorizontalVelocity : maxHorizontalVelocity * -1;
 	}
 	if (FMath::Abs(playerVelocity.Y) >= maxHorizontalVelocity) {

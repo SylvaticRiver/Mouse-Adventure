@@ -30,8 +30,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
 		class UBoxComponent* CollisionBox{ nullptr };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
+		TSubclassOf<class ACollectible> LootItem;
+
 	UFUNCTION()
 		void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex,
 			bool bFromSweep, const FHitResult& SweepResult);
+
+	void destroyAndDropLoot();
 };

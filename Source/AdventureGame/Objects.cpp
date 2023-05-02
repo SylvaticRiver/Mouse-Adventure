@@ -3,6 +3,8 @@
 
 #include "Objects.h"
 #include "Components/BoxComponent.h"
+#include "Arrow.h"
+#include "Collectible.h"
 
 // Sets default values
 AObjects::AObjects()
@@ -34,6 +36,16 @@ void AObjects::Tick(float DeltaTime)
 
 void AObjects::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	if (OtherActor->IsA<AArrow>()) {
+		destroyAndDropLoot();
+	}
+}
+
+void AObjects::destroyAndDropLoot()
+{
+	this->SetActorEnableCollision(false);
+	this->SetActorHiddenInGame(true);
+	GetWorld()->SpawnActor<AActor>(LootItem, GetActorLocation(), GetActorRotation());
+	this->Destroy();
 }
 

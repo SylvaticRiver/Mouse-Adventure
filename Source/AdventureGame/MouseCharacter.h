@@ -36,13 +36,14 @@ public:
 	bool exhausted;
 	int bowcharge;
 	FVector lastCheckpointPos;
+	int gnomePiecesCollected;
 
 	int ArrowCountOfAmmunitionForBow;
 	int lives;
 	int Stamina;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
-		class UStaticMeshComponent* MouseMesh;
+		class USkeletalMeshComponent* MouseMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
 		class USpringArmComponent* SpringArm;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")

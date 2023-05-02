@@ -12,6 +12,6 @@ void AStick::onTick(float tickdelta)
 
 void AStick::Collected(AActor* OtherActor)
 {
-	Cast<AMouseCharacter>(OtherActor)->ArrowCountOfAmmunitionForBow = 10;
+	Cast<AMouseCharacter>(OtherActor)->ArrowCountOfAmmunitionForBow += 5;
 	despawn();
 }
