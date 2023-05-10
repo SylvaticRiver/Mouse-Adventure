@@ -71,6 +71,15 @@ public:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
 		TSubclassOf<class AArrow> Arrow;
 
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+			bool hurt;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+			int invulTicks;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+			bool isChargingBow;
+
 public:
 	UFUNCTION(BLueprintCallable)
 		void MoveStraight(const FInputActionValue& InputValue);
@@ -112,4 +121,7 @@ public:
 		float GetYVelocity();
 	UFUNCTION(BluePrintCallable)
 		float GetZVelocity();
+
+	UFUNCTION(BluePrintCallable)
+		void HurtPlayer();
 };

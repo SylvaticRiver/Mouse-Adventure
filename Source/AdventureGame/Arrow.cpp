@@ -55,9 +55,8 @@ void AArrow::despawn()
 void AArrow::travel(float tickdelta)
 {
 	appplyGravity(0.01);
-	/*ArrowMesh->SetRelativeLocation(ArrowMesh->GetRelativeLocation() + arrowVelocity * 5000 * tickdelta);*/
-	SetActorRelativeLocation(GetActorLocation() + arrowVelocity * 5000 * tickdelta);
-	ArrowMesh->SetRelativeRotation(arrowVelocity.Rotation());
+	ArrowMesh->SetRelativeLocation(ArrowMesh->GetRelativeLocation() + arrowVelocity * 5000 * tickdelta);
+	/*SetActorRelativeLocation(GetActorLocation() + arrowVelocity * 5000 * tickdelta);*/
 }
 
 void AArrow::appplyGravity(float strenght) {

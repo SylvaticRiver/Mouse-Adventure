@@ -58,6 +58,7 @@ AMouseCharacter::AMouseCharacter()
 	ArrowCountOfAmmunitionForBow = 3;
 	lastCheckpointPos = FVector::ZeroVector;
 	gnomePiecesCollected = 0;
+	invulTicks = 0;
 }
 
 // Called when the game starts or when spawned
@@ -80,6 +81,7 @@ void AMouseCharacter::BeginPlay()
 	Stamina = 100;
 	exhausted = false;
 	gnomePiecesCollected = 0;
+	invulTicks = 0;
 }
 
 // Called every frame
@@ -103,6 +105,13 @@ void AMouseCharacter::Tick(float DeltaTime)
 	}
 	Camera->SetRelativeLocation(isSprinting ? FVector(-1300, 0, 300) : FVector(-1000, 0, 200));
 	ManageStamina();
+
+	if (invulTicks > 0) {
+		invulTicks--;
+	}
+	else if (invulTicks < 0) {
+		invulTicks = 0;
+	}
 }
 
 // Called to bind functionality to input
@@ -210,9 +219,10 @@ void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
 void AMouseCharacter::ChargeBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
 	if (ArrowCountOfAmmunitionForBow > 0) {
-		if (val && bowcharge < 20) {
+		if (val && bowcharge < 40) {
 			UE_LOG(LogTemp, Warning, TEXT("Charging ticks = %d"), bowcharge);
-			Camera->FieldOfView -= 2;
+			isChargingBow = true;
+			Camera->FieldOfView -= 1;
 			bowcharge++;
 		}
 	}
@@ -227,6 +237,7 @@ void AMouseCharacter::ShootBow(const FInputActionValue& InputValue) {
 		ArrowCountOfAmmunitionForBow -= 1;
 		UE_LOG(LogTemp, Warning, TEXT("ArrowCountOfAmmunitionForMyBow = %d"), ArrowCountOfAmmunitionForBow);
 		bowcharge = 0;
+		isChargingBow = false;
 		Camera->FieldOfView = 90;
 	}
 }    
@@ -296,5 +307,19 @@ float AMouseCharacter::GetYVelocity() {
 
 float AMouseCharacter::GetZVelocity() {
 	return this->playerVelocity.Z;
+}
+
+void AMouseCharacter::HurtPlayer()
+{
+	if (invulTicks <= 0) {
+		if (lives > 0) {
+			lives -= 1;
+			invulTicks = 100;
+			UE_LOG(LogTemp, Warning, TEXT("health = %d"), lives);
+		}
+		else {
+			onDeath();
+		}
+	}
 }
 

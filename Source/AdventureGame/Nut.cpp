@@ -12,6 +12,8 @@ void ANut::onTick(float tickdelta)
 
 void ANut::Collected(AActor* OtherActor)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DAMN"));
-	despawn();
+	if (OtherActor->IsA<AMouseCharacter>()) {
+		Cast<AMouseCharacter>(OtherActor)->lives = 5;
+		despawn();
+	}
 }

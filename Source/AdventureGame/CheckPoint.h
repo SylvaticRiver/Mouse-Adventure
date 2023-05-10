@@ -23,8 +23,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lilypad")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Checkpoint")
 		class UBoxComponent* DetectionBox{ nullptr };
 
 	UFUNCTION()
