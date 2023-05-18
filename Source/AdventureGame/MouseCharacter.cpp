@@ -22,7 +22,8 @@ AMouseCharacter::AMouseCharacter()
 	MouseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MouseMesh"));
 	MouseMesh->SetupAttachment(GetRootComponent());
 	MouseMesh->SetRelativeScale3D(FVector(1.9775, 1.9775, 1.9775));
-	MouseMesh->SetRelativeRotation(FRotator(-90, 0, 0));
+	MouseMesh->SetRelativeRotation(FRotator(0, 0, -90));
+	MouseMesh->SetRelativeLocation(FVector(0, 0, -85));
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(GetRootComponent());
@@ -52,11 +53,10 @@ AMouseCharacter::AMouseCharacter()
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lives = 5;
-	Stamina = 100;
+	Stamina = 1000;
 	exhausted = false;
 	bowcharge = 0;
 	ArrowCountOfAmmunitionForBow = 3;
-	lastCheckpointPos = FVector::ZeroVector;
 	gnomePiecesCollected = 0;
 	invulTicks = 0;
 }
@@ -77,8 +77,9 @@ void AMouseCharacter::BeginPlay()
 	maxHorizontalVelocity = 100;
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
+	lastCheckpointPos = GetActorLocation();
 	lives = 5;
-	Stamina = 100;
+	Stamina = 1000;
 	exhausted = false;
 	gnomePiecesCollected = 0;
 	invulTicks = 0;
@@ -178,7 +179,7 @@ void AMouseCharacter::Sprint(const FInputActionValue& InputValue) {
 	else if (Stamina <= 0) {
 		this->isSprinting = false;
 	}
-	onDeath();
+	//onDeath();
 }
 
 void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
@@ -188,12 +189,12 @@ void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
 
 void AMouseCharacter::JumpUp(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
-	if (val && isOnGround() && Stamina > 30) {
+	if (val && isOnGround() && Stamina > 300) {
 		UE_LOG(LogTemp, Warning, TEXT("Jumped"));
 		isJumping = true;
 		playerVelocity.Z = 125;
 		prevVelocity.Z = playerVelocity.Z;
-		Stamina -= 30;
+		Stamina -= 300;
 	}
 }
 
@@ -265,15 +266,15 @@ void AMouseCharacter::appplyGravity(float strenght) {
 
 void AMouseCharacter::ManageStamina() {
 	if (isSprinting) {
-		Stamina--;
+		Stamina -= 10;
 	}
-	else {
+	else if (Stamina < 1000) {
 		Stamina++;
 	}
 	if (Stamina <= 0) {
 		exhausted = true;
 	}
-	if (Stamina >= 20) {
+	if (Stamina >= 900) {
 		exhausted = false;
 	}
 	/*UE_LOG(LogTemp, Warning, TEXT("IA_Forward triggered"));*/
@@ -288,7 +289,7 @@ void AMouseCharacter::onDeath()
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lives = 5;
-	Stamina = 100;
+	Stamina = 1000;
 	exhausted = false;
 	bowcharge = 0;
 }
@@ -312,7 +313,7 @@ float AMouseCharacter::GetZVelocity() {
 void AMouseCharacter::HurtPlayer()
 {
 	if (invulTicks <= 0) {
-		if (lives > 0) {
+		if (lives > 1) {
 			lives -= 1;
 			invulTicks = 100;
 			UE_LOG(LogTemp, Warning, TEXT("health = %d"), lives);

@@ -33,6 +33,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Arrow")
 		class USphereComponent* DetectionSphere{ nullptr };
 
+	UPROPERTY(BlueprintReadWrite, Category = "Arrow")
+		bool isBurning;
+
 	UFUNCTION()
 		void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex,

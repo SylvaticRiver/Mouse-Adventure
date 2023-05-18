@@ -23,9 +23,16 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	bool isDestroyed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
 		class UStaticMeshComponent* ObjectMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
+		int DestructionDelay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
+		bool requiresSpecialArrow;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object")
 		class UBoxComponent* CollisionBox{ nullptr };

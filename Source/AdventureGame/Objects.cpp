@@ -18,6 +18,8 @@ AObjects::AObjects()
 	CollisionBox->InitBoxExtent(FVector(50, 50, 50));
 	CollisionBox->OnComponentBeginOverlap.AddDynamic(this, &AObjects::OnOverlap);
 	ObjectMesh->SetupAttachment(GetRootComponent());
+
+	isDestroyed = false;
 }
 
 // Called when the game starts or when spawned
@@ -32,12 +34,22 @@ void AObjects::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (isDestroyed) {
+		if (DestructionDelay <= 0) {
+			destroyAndDropLoot();
+		}
+		else {
+			DestructionDelay--;
+		}
+	}
 }
 
 void AObjects::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->IsA<AArrow>()) {
-		destroyAndDropLoot();
+		if (!requiresSpecialArrow || (requiresSpecialArrow && Cast<AArrow>(OtherActor)->isBurning)) {
+			isDestroyed = true;
+		}
 	}
 }
 

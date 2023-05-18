@@ -20,6 +20,7 @@ AArrow::AArrow()
 	ArrowMesh->SetupAttachment(GetRootComponent());
 
 	ticksAlive = 0;
+	isBurning = false;
 }
 
 // Called when the game starts or when spawned

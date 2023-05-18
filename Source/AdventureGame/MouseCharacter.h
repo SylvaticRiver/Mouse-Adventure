@@ -38,8 +38,13 @@ public:
 	FVector lastCheckpointPos;
 	int gnomePiecesCollected;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Mouse")
 	int ArrowCountOfAmmunitionForBow;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Mouse")
 	int lives;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Mouse")
 	int Stamina;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mouse")
