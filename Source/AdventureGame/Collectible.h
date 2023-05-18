@@ -26,6 +26,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	FVector velocity;
+	bool onGround;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Collectible")
 	int ticksPassed;
 

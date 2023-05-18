@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "Torch.h"
 #include "Components/SphereComponent.h"
 #include "Arrow.h"
 #include "MouseCharacter.h"
-#include "Torch.h"
 
 // Sets default values
 ATorch::ATorch()

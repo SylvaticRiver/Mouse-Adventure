@@ -64,6 +64,6 @@ void AFrogProjectile::despawn()
 
 void AFrogProjectile::Travel(float tickDelta)
 {
-	FVector intermediateSteps = (targetLocation - frogLocation) * tickDelta;
+	FVector intermediateSteps = (targetLocation - frogLocation) * 1.5F * tickDelta;
 	SetActorLocation(GetActorLocation() + intermediateSteps);
 }

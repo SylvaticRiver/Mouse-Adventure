@@ -16,7 +16,7 @@ AFrogEnemy::AFrogEnemy()
 	FrogMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FrogMesh"));
 	DetectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionBox"));
 	SetRootComponent(DetectionSphere);
-	DetectionSphere->InitSphereRadius(500);
+	DetectionSphere->InitSphereRadius(1000);
 	DetectionSphere->OnComponentBeginOverlap.AddDynamic(this, &AFrogEnemy::OnOverlap);
 	FrogMesh->SetupAttachment(GetRootComponent());
 

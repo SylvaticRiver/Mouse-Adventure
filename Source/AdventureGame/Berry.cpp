@@ -13,6 +13,6 @@ void ABerry::onTick(float tickdelta)
 
 void ABerry::Collected(AActor* OtherActor)
 {
-	Cast<AMouseCharacter>(OtherActor)->SetActorLocation(FVector(100, 100, 100));
+	Cast<AMouseCharacter>(OtherActor)->Stamina += 1000;
 	despawn();
 }

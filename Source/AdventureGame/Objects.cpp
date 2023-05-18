@@ -57,7 +57,9 @@ void AObjects::destroyAndDropLoot()
 {
 	this->SetActorEnableCollision(false);
 	this->SetActorHiddenInGame(true);
-	GetWorld()->SpawnActor<AActor>(LootItem, GetActorLocation(), GetActorRotation());
+	if (LootItem != NULL) {
+		AActor* spawnedLoot = GetWorld()->SpawnActor<AActor>(LootItem, GetActorLocation() - (CollisionBox->GetScaledBoxExtent() / 2), GetActorRotation());
+	}
 	this->Destroy();
 }
 

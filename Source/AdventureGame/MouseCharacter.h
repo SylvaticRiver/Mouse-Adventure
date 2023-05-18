@@ -85,6 +85,9 @@ public:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite)
 			bool isChargingBow;
 
+		UPROPERTY(EditAnywhere, BlueprintReadWrite)
+			bool WonGame;
+
 public:
 	UFUNCTION(BLueprintCallable)
 		void MoveStraight(const FInputActionValue& InputValue);
@@ -97,12 +100,6 @@ public:
 	UFUNCTION(BLueprintCallable)
 		void JumpUp(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
-		void JumpUpComplete(const FInputActionValue& InputValue);
-	UFUNCTION(BLueprintCallable)
-		void CrouchDown(const FInputActionValue& InputValue);
-	UFUNCTION(BLueprintCallable)
-		void CrouchComplete(const FInputActionValue& InputValue);
-	UFUNCTION(BLueprintCallable)
 		void RotateX(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
 		void RotateY(const FInputActionValue& InputValue);
@@ -110,15 +107,19 @@ public:
 		void ChargeBow(const FInputActionValue& InputValue);
 	UFUNCTION(BLueprintCallable)
 		void ShootBow(const FInputActionValue& InputValue);
-	UFUNCTION(BLueprintCallable)
-		void CattailSling(const FInputActionValue& InputValue);
-
 
 	void MovePlayer(float tickdelta);
 	void appplyGravity(float strenght);
 	bool isOnGround();
 	void ManageStamina();
 	void onDeath();
+
+	void CamInCave();
+	void CamOutOfCave();
+
+	UFUNCTION(BlueprintNativeEvent)
+		void onWin();
+	virtual void onWin_Implementation();
 
 	UFUNCTION(BluePrintCallable)
 		float GetXVelocity();

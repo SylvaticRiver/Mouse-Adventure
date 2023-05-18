@@ -49,7 +49,7 @@ AMouseCharacter::AMouseCharacter()
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
 	terminalVelocity = -40;
-	maxHorizontalVelocity = 100;
+	maxHorizontalVelocity = 100000;
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lives = 5;
@@ -59,6 +59,8 @@ AMouseCharacter::AMouseCharacter()
 	ArrowCountOfAmmunitionForBow = 3;
 	gnomePiecesCollected = 0;
 	invulTicks = 0;
+	this->GetCharacterMovement()->MaxWalkSpeed = 500;
+	WonGame = false;
 }
 
 // Called when the game starts or when spawned
@@ -74,7 +76,7 @@ void AMouseCharacter::BeginPlay()
 	isSprinting = false;
 	playerVelocity = FVector::ZeroVector;
 	terminalVelocity = -40;
-	maxHorizontalVelocity = 100;
+	maxHorizontalVelocity = 100000;
 	isJumping = false;
 	prevVelocity = FVector::ZeroVector;
 	lastCheckpointPos = GetActorLocation();
@@ -83,6 +85,7 @@ void AMouseCharacter::BeginPlay()
 	exhausted = false;
 	gnomePiecesCollected = 0;
 	invulTicks = 0;
+	this->GetCharacterMovement()->MaxWalkSpeed = 500;
 }
 
 // Called every frame
@@ -106,6 +109,9 @@ void AMouseCharacter::Tick(float DeltaTime)
 	}
 	Camera->SetRelativeLocation(isSprinting ? FVector(-1300, 0, 300) : FVector(-1000, 0, 200));
 	ManageStamina();
+	if (gnomePiecesCollected >= 2) {
+		onWin();
+	}
 
 	if (invulTicks > 0) {
 		invulTicks--;
@@ -128,9 +134,6 @@ void AMouseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EIC->BindAction(IA_Sprint, ETriggerEvent::Triggered, this, &AMouseCharacter::Sprint);
 		EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AMouseCharacter::StopSprint);
 		EIC->BindAction(IA_Jump, ETriggerEvent::Started, this, &AMouseCharacter::Jump);
-		EIC->BindAction(IA_Jump, ETriggerEvent::Completed, this, &AMouseCharacter::JumpUpComplete);
-		EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AMouseCharacter::CrouchDown);
-		EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AMouseCharacter::CrouchComplete);
 		EIC->BindAction(IA_Bow, ETriggerEvent::Triggered, this, &AMouseCharacter::ChargeBow);
 		EIC->BindAction(IA_Bow, ETriggerEvent::Completed, this, &AMouseCharacter::ShootBow);
 	}
@@ -139,14 +142,14 @@ void AMouseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 void AMouseCharacter::MoveStraight(const FInputActionValue& InputValue) {
 	float val = InputValue.Get<float>();
 	if (val > 0) {
-		float newVelocity = val * isSprinting ? 30 : 10;
+		float newVelocity = val * 10;
 		newVelocity *= isJumping ? 1.1 : 1;
-		playerVelocity.X += newVelocity;
+		playerVelocity.X += newVelocity * (isSprinting ? 10000 : 1);
 		prevVelocity.X = playerVelocity.X;
 	}
 	if (val < 0) {
 		float newVelocity = val * 10;
-		playerVelocity.X += newVelocity;
+		playerVelocity.X += newVelocity * (isSprinting ? 10000 : 1);
 		prevVelocity.X = playerVelocity.X;
 	}
 }
@@ -179,7 +182,6 @@ void AMouseCharacter::Sprint(const FInputActionValue& InputValue) {
 	else if (Stamina <= 0) {
 		this->isSprinting = false;
 	}
-	//onDeath();
 }
 
 void AMouseCharacter::StopSprint(const FInputActionValue& InputValue) {
@@ -194,34 +196,14 @@ void AMouseCharacter::JumpUp(const FInputActionValue& InputValue) {
 		isJumping = true;
 		playerVelocity.Z = 125;
 		prevVelocity.Z = playerVelocity.Z;
-		Stamina -= 300;
+		Stamina -= 150;
 	}
-}
-
-void AMouseCharacter::JumpUpComplete(const FInputActionValue& InputValue) {
-	
-	/*isJumping = false;*/
-}
-
-void AMouseCharacter::CrouchDown(const FInputActionValue& InputValue) {
-	bool val = InputValue.Get<bool>();
-	if (val) {
-		Camera->SetRelativeLocation(FVector(-900.f, 0.f, 150.f));
-		Camera->SetRelativeRotation(FRotator3d(-10.f, 0.f, 0.f));
-	}
-}
-
-void AMouseCharacter::CrouchComplete(const FInputActionValue& InputValue) {
-	bool val = InputValue.Get<bool>();
-	Camera->SetRelativeLocation(FVector(-1000.f, 0.f, 200.f));
-	Camera->SetRelativeRotation(FRotator3d(-10.f, 0.f, 0.f));
 }
 
 void AMouseCharacter::ChargeBow(const FInputActionValue& InputValue) {
 	bool val = InputValue.Get<bool>();
 	if (ArrowCountOfAmmunitionForBow > 0) {
 		if (val && bowcharge < 40) {
-			UE_LOG(LogTemp, Warning, TEXT("Charging ticks = %d"), bowcharge);
 			isChargingBow = true;
 			Camera->FieldOfView -= 1;
 			bowcharge++;
@@ -236,21 +218,21 @@ void AMouseCharacter::ShootBow(const FInputActionValue& InputValue) {
 		AActor* spawnedArrow = GetWorld()->SpawnActor<AActor>(Arrow, GetActorLocation() + GetController()->GetControlRotation().Vector(), GetController()->GetControlRotation());
 		Cast<AArrow>(spawnedArrow)->arrowVelocity = FVector(VelocityMultiplier, 0, VelocityMultiplier);
 		ArrowCountOfAmmunitionForBow -= 1;
-		UE_LOG(LogTemp, Warning, TEXT("ArrowCountOfAmmunitionForMyBow = %d"), ArrowCountOfAmmunitionForBow);
 		bowcharge = 0;
 		isChargingBow = false;
 		Camera->FieldOfView = 90;
 	}
 }    
 
-void AMouseCharacter::CattailSling(const FInputActionValue& InputValue) {
-
-}
-
 void AMouseCharacter::MovePlayer(float tickdelta) {
 	appplyGravity(10);
+	if (isSprinting) {
+		this->GetCharacterMovement()->MaxWalkSpeed = 750;
+	}
+	else {
+		this->GetCharacterMovement()->MaxWalkSpeed = 500;
+	}
 	if (FMath::Abs(playerVelocity.X) >= maxHorizontalVelocity) {
-		SetActorRotation(FRotator(0, 0, 0));
 		this->playerVelocity.X = this->playerVelocity.X > 0 ? maxHorizontalVelocity : maxHorizontalVelocity * -1;
 	}
 	if (FMath::Abs(playerVelocity.Y) >= maxHorizontalVelocity) {
@@ -266,10 +248,10 @@ void AMouseCharacter::appplyGravity(float strenght) {
 
 void AMouseCharacter::ManageStamina() {
 	if (isSprinting) {
-		Stamina -= 10;
+		Stamina -= 5;
 	}
 	else if (Stamina < 1000) {
-		Stamina++;
+		Stamina += 1.5;
 	}
 	if (Stamina <= 0) {
 		exhausted = true;
@@ -294,6 +276,21 @@ void AMouseCharacter::onDeath()
 	bowcharge = 0;
 }
 
+void AMouseCharacter::CamInCave()
+{
+	Camera->SetRelativeLocation(FVector::ZeroVector);
+}
+
+void AMouseCharacter::CamOutOfCave()
+{
+	Camera->SetRelativeLocation(FVector(-1000.f, 0.f, 200.f));
+}
+
+void AMouseCharacter::onWin_Implementation()
+{
+	WonGame = true;
+}
+
 bool AMouseCharacter::isOnGround() {
 	return !GetCharacterMovement()->IsFalling() && !isJumping;
 }
@@ -316,7 +313,6 @@ void AMouseCharacter::HurtPlayer()
 		if (lives > 1) {
 			lives -= 1;
 			invulTicks = 100;
-			UE_LOG(LogTemp, Warning, TEXT("health = %d"), lives);
 		}
 		else {
 			onDeath();
